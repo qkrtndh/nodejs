@@ -16,7 +16,10 @@ var app = http.createServer(function(request,response){
     }
     response.writeHead(200);
     
-    response.end(fs.readFileSync(__dirname + _url));
+    //response.end(fs.readFileSync(__dirname + _url)); 
+    // 사용자가 접속한 url에 따라서 파일들을 읽어주는 코드
+
+    response.end(queryData.id); 
  
 });
 app.listen(3000);
