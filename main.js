@@ -10,64 +10,66 @@ var app = http.createServer(function (request, response) {
   {
     if (queryData.id == undefined)//main페이지라면
     {
-      fs.readFile(`${queryData.id}`, 'utf8', function (err, description) {
+      fs.readdir('./data', function (error, filelist) {
         var title = "welcome";
         var description = "main page";
+        var list = '<ol>';
+        var i = 0;
+        while (i < filelist.length) {
+          list += `<li><a href='/?id=${filelist[i]}'>${filelist[i]}</a></li>`;
+          i += 1;
+        }
+        list = list + '</ol>';
         var template = `
-          <!doctype html>
-      <html>
-      <head>
-        <title>WEB1 - ${title}</title>
-        <meta charset="utf-8">
-      </head>
-      <body>
-        <h1><a href="/">WEB</a></h1>
-        <ol>
-          <li><a href="/?id=HTML">HTML</a></li>
-          <li><a href="/?id=CSS">CSS</a></li>
-          <li><a href="/?id=JavaScript">JavaScript</a></li>
-        </ol>
-        <h2>${title}</h2>
-        
-        <p>${description}</p>
-      </body>
-      </html>
-      
-          `;
-        //response.end(fs.readFileSync(__dirname + _url)); 
-        // 사용자가 접속한 url에 따라서 파일들을 읽어주는 코드
+            <!doctype html>
+        <html>
+        <head>
+          <title>WEB1 - ${title}</title>
+          <meta charset="utf-8">
+        </head>
+        <body>
+          <h1><a href="/">WEB</a></h1>
+          ${list}
+          <h2>${title}</h2>
+          
+          <p>${description}</p>
+        </body>
+        </html>
+            `;
         response.writeHead(200);
         response.end(template);
-      });
+      })
     }
     else {
-      fs.readFile(`${queryData.id}`, 'utf8', function (err, description) {
-        var title = queryData.id;
-        var template = `
+      fs.readdir('./data', function (error, filelist) {
+        var list = '<ol>';
+        var i = 0;
+        while (i < filelist.length) {
+          list += `<li><a href='/?id=${filelist[i]}'>${filelist[i]}</a></li>`;
+          i += 1;
+        }
+        list = list + '</ol>';
+        fs.readFile(`data/${queryData.id}`, 'utf8', function (err, description) {
+          var title = queryData.id;
+          var template = `
         <!doctype html>
-    <html>
-    <head>
-      <title>WEB1 - ${title}</title>
-      <meta charset="utf-8">
-    </head>
-    <body>
-      <h1><a href="/">WEB</a></h1>
-      <ol>
-        <li><a href="/?id=HTML">HTML</a></li>
-        <li><a href="/?id=CSS">CSS</a></li>
-        <li><a href="/?id=JavaScript">JavaScript</a></li>
-      </ol>
-      <h2>${title}</h2>
+        <html>
+          <head>
+           <title>WEB1 - ${title}</title>
+            <meta charset="utf-8">
+          </head>
+          <body>
+            <h1><a href="/">WEB</a></h1>
+             ${list}
+            <h2>${title}</h2>
       
-      <p>${description}</p>
-    </body>
-    </html>
-    
+            <p>${description}</p>
+          </body>
+         </html>
         `;
-        //response.end(fs.readFileSync(__dirname + _url)); 
-        // 사용자가 접속한 url에 따라서 파일들을 읽어주는 코드
-        response.writeHead(200);
-        response.end(template);
+          response.writeHead(200);
+          response.end(template);
+        });
       });
     }
   }
