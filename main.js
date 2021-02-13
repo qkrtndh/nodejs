@@ -37,20 +37,6 @@ function templateList(filelist) {
   return list;
 }
 
-//삭제시 확인하고 삭제하는 함수, true, false를 반환한다
-function del_check(){
-  var result = confirm('정말로 삭제 하시겠습니까?');
-  if(result==true)
-  {
-    alert('삭제 되었습니다.');
-  }
-  else
-  {
-    alert('취소 되었습니다.');
-  }
-  return result;
-}
-
 //서버를 생성하고 내용을 표현한다.
 var app = http.createServer(function (request, response) {
   var _url = request.url;//_url에 사용자가 접속한 링크를 가져온다.
@@ -76,14 +62,15 @@ var app = http.createServer(function (request, response) {
         fs.readFile(`data/${queryData.id}`, 'utf8', function (err, description) {
           var title = queryData.id;
           var list = templateList(filelist);
-          var template = templateHTML(title, list, `<h2>${title}</h2>${description}`,
+          var template = templateHTML(title, list,
+            `<h2>${title}</h2>${description}`,
             `<a href="/create">creat</a>
              <a href="/update?id=${title}">update</a>
-             <form action = "/delete_process" method="post" onsubmit="return del_check();">
+             <form action = "/delete_process" method="post" onsubmit="return confirm('정말로 삭제하시겠습니까?')">
               <input type="hidden" name="id" value=${title}>
               <input type="submit" value="delete">
-             </form>
-             `);
+             </form>`
+          );
           response.writeHead(200);
           response.end(template);
         });
@@ -134,7 +121,7 @@ var app = http.createServer(function (request, response) {
         //제목이 바뀔 경우를 대비하여 id로 제목값을 따로 저장
         //사용자와 상관없는 내용이므로 hidden을 이용하여 숨긴다.
         var template = templateHTML(title, list,
-         `
+          `
          <form action="/update_process" method="post">
          <input type="hidden" name="id" value="${title}">
         <p><input type="text" name="title" placeholder="제목" value="${title}"></p>
@@ -161,17 +148,32 @@ var app = http.createServer(function (request, response) {
       var title = post.title;
       var description = post.description;
       //파일 이름 수정시 내용
-      fs.rename(`data/${id}`,`data/${title}`,function(error){
+      fs.rename(`data/${id}`, `data/${title}`, function (error) {
         //위의 create에서의 기능과 같이 이름을 바꾸고 내용을 바꾼다.
         fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
-        
           response.writeHead(302, { Location: `/?id=${title}` });
           response.end();
-  
+
         })
       });
     });
 
+  }
+  else if (pathname == '/delete_process') {//문서 삭제 및 리다이렉션
+    var body = '';
+    request.on('data', function (data) {
+      body += data;
+
+    });
+    request.on('end', function () {
+      var post = qs.parse(body);
+      var id = post.id;
+      fs.unlink(`data/${id}`, function (error) {
+        response.writeHead(302, { Location: `/` });
+        response.end();
+      })
+
+    });
   }
   else {//잘못된 페이지인 경우
     response.writeHead(404);
