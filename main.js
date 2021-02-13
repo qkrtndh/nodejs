@@ -5,7 +5,7 @@ var qs = require('querystring');
 //html템플릿
 //함수를 통해 공통의 서식을 만들고 nodejs를 통해 동적으로 내용이 바뀌게 한 뒤
 //html 내용을 return한다.
-function templateHTML(title, list, body,controll) {
+function templateHTML(title, list, body, controll) {
   return `
   <!doctype html>
   <html>
@@ -50,7 +50,7 @@ var app = http.createServer(function (request, response) {
         var title = "welcome";
         var description = "main page";
         var list = templateList(filelist);
-        var template = templateHTML(title, list, 
+        var template = templateHTML(title, list,
           `<h2>${title}</h2>${description}`,
           `<a href="/create">creat</a>`);
         response.writeHead(200);
@@ -63,7 +63,7 @@ var app = http.createServer(function (request, response) {
           var title = queryData.id;
           var list = templateList(filelist);
           var template = templateHTML(title, list, `<h2>${title}</h2>${description}`,
-          `<a href="/create">creat</a> <a href="/update">update</a>`);
+            `<a href="/create">creat</a> <a href="/update?id=${title}">update</a>`);
           response.writeHead(200);
           response.end(template);
         });
@@ -75,14 +75,14 @@ var app = http.createServer(function (request, response) {
       var title = "WEB - create";
       var list = templateList(filelist);
       var template = templateHTML(title, list,
-        `<form action="http://localhost:3000/create_process" method="post">
+        `<form action="/create_process" method="post">
         <p><input type="text" name="title" placeholder="제목"></p>
         <p>
           <textarea name="description" placeholder="본문"></textarea>
         </p>
         <p><input type="submit"></p>
       </form>
-        `,'');
+        `, '');
       response.writeHead(200);
       response.end(template);
     })
@@ -105,6 +105,29 @@ var app = http.createServer(function (request, response) {
       })
     });
 
+  }
+  else if (pathname == '/update') {//하위 페이지인 업데이트 페이지
+    fs.readdir('./data', function (error, filelist) {
+      fs.readFile(`data/${queryData.id}`, 'utf8', function (err, description) {
+        var title = queryData.id;
+        var list = templateList(filelist);
+        //제목이 바뀔 경우를 대비하여 id로 제목값을 따로 저장
+        //사용자와 상관없는 내용이므로 hidden을 이용하여 숨긴다.
+        var template = templateHTML(title, list,
+         `
+         <form action="/update_process" method="post">
+         <input type="hidden" name="id" value="${title}">
+        <p><input type="text" name="title" placeholder="제목" value="${title}"></p>
+        <p>
+          <textarea name="description" placeholder="본문">${description}</textarea>
+        </p>
+        <p><input type="submit"></p>
+      </form>`,
+          `<a href="/create">creat</a> <a href="/update?id=${title}">update</a>`);
+        response.writeHead(200);
+        response.end(template);
+      });
+    });
   }
   else {//잘못된 페이지인 경우
     response.writeHead(404);
