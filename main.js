@@ -1,6 +1,7 @@
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
+var qs = require('querystring');
 function templateHTML(title, list, body) {
   return `
   <!doctype html>
@@ -62,8 +63,8 @@ var app = http.createServer(function (request, response) {
     fs.readdir('./data', function (error, filelist) {
       var title = "WEB - create";
       var list = templateList(filelist);
-      var template = templateHTML(title, list, 
-        `<form action="http://localhost:3000/process_create" method="post">
+      var template = templateHTML(title, list,
+        `<form action="http://localhost:3000/create_process" method="post">
         <p><input type="text" name="title" placeholder="제목"></p>
         <p>
           <textarea name="description" placeholder="본문"></textarea>
@@ -74,6 +75,20 @@ var app = http.createServer(function (request, response) {
       response.writeHead(200);
       response.end(template);
     })
+  }
+  else if (pathname == '/create_process') {
+    var body = '';
+    request.on('data', function (data) {
+      body += data;
+
+    });
+    request.on('end', function () {
+      var post = qs.parse(body);
+      var title = post.title;
+      var description = post.description;
+    });
+    response.writeHead(200);
+    response.end('success');
   }
   else {
     response.writeHead(404);
