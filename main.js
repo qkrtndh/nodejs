@@ -1,7 +1,7 @@
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
-function templateHTML(title,list,body){
+function templateHTML(title, list, body) {
   return `
   <!doctype html>
   <html>
@@ -12,13 +12,14 @@ function templateHTML(title,list,body){
     <body>
       <h1><a href="/">WEB</a></h1>
        ${list}
+       <a href="/create">creat</a>
        ${body}
     </body>
    </html>
   `
-  ;
+    ;
 }
-function templateList(filelist){
+function templateList(filelist) {
   var list = '<ol>';
   var i = 0;
   while (i < filelist.length) {
@@ -40,7 +41,7 @@ var app = http.createServer(function (request, response) {
         var title = "welcome";
         var description = "main page";
         var list = templateList(filelist);
-        var template = templateHTML(title,list,`<h2>${title}</h2>${description}`);
+        var template = templateHTML(title, list, `<h2>${title}</h2>${description}`);
         response.writeHead(200);
         response.end(template);
       })
@@ -50,12 +51,29 @@ var app = http.createServer(function (request, response) {
         fs.readFile(`data/${queryData.id}`, 'utf8', function (err, description) {
           var title = queryData.id;
           var list = templateList(filelist);
-          var template = templateHTML(title,list,`<h2>${title}</h2>${description}`);
+          var template = templateHTML(title, list, `<h2>${title}</h2>${description}`);
           response.writeHead(200);
           response.end(template);
         });
       });
     }
+  }
+  else if (pathname == '/create') {
+    fs.readdir('./data', function (error, filelist) {
+      var title = "WEB - create";
+      var list = templateList(filelist);
+      var template = templateHTML(title, list, 
+        `<form action="http://localhost:3000/process_create" method="post">
+        <p><input type="text" name="title" placeholder="제목"></p>
+        <p>
+          <textarea name="description" placeholder="본문"></textarea>
+        </p>
+        <p><input type="submit"></p>
+      </form>
+        `);
+      response.writeHead(200);
+      response.end(template);
+    })
   }
   else {
     response.writeHead(404);
