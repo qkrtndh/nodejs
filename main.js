@@ -37,6 +37,20 @@ function templateList(filelist) {
   return list;
 }
 
+//삭제시 확인하고 삭제하는 함수, true, false를 반환한다
+function del_check(){
+  var result = confirm('정말로 삭제 하시겠습니까?');
+  if(result==true)
+  {
+    alert('삭제 되었습니다.');
+  }
+  else
+  {
+    alert('취소 되었습니다.');
+  }
+  return result;
+}
+
 //서버를 생성하고 내용을 표현한다.
 var app = http.createServer(function (request, response) {
   var _url = request.url;//_url에 사용자가 접속한 링크를 가져온다.
@@ -63,7 +77,13 @@ var app = http.createServer(function (request, response) {
           var title = queryData.id;
           var list = templateList(filelist);
           var template = templateHTML(title, list, `<h2>${title}</h2>${description}`,
-            `<a href="/create">creat</a> <a href="/update?id=${title}">update</a>`);
+            `<a href="/create">creat</a>
+             <a href="/update?id=${title}">update</a>
+             <form action = "/delete_process" method="post" onsubmit="return del_check();">
+              <input type="hidden" name="id" value=${title}>
+              <input type="submit" value="delete">
+             </form>
+             `);
           response.writeHead(200);
           response.end(template);
         });
