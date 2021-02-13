@@ -1,8 +1,11 @@
-var http = require('http');
+var http = require('http');//require는 '모듈'을 가져온다.
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
-function templateHTML(title, list, body) {
+//html템플릿
+//함수를 통해 공통의 서식을 만들고 nodejs를 통해 동적으로 내용이 바뀌게 한 뒤
+//html 내용을 return한다.
+function templateHTML(title, list, body,controll) {
   return `
   <!doctype html>
   <html>
@@ -13,13 +16,16 @@ function templateHTML(title, list, body) {
     <body>
       <h1><a href="/">WEB</a></h1>
        ${list}
-       <a href="/create">creat</a>
+       ${controll}
        ${body}
     </body>
    </html>
-  `
-    ;
+  `;
 }
+
+//목록 생성 템플릿
+//각 html페이지마다 공통으로 나타나는 리스트를 파일을 읽어들여
+//마찬가지로 html본문에 삽입할 수 있는 내용을 반환시킨다.
 function templateList(filelist) {
   var list = '<ol>';
   var i = 0;
@@ -30,11 +36,13 @@ function templateList(filelist) {
   list = list + '</ol>';
   return list;
 }
+
+//서버를 생성하고 내용을 표현한다.
 var app = http.createServer(function (request, response) {
-  var _url = request.url;
-  var queryData = url.parse(_url, true).query;
-  var pathname = url.parse(_url, true).pathname;
-  if (pathname == '/')//루트라면
+  var _url = request.url;//_url에 사용자가 접속한 링크를 가져온다.
+  var queryData = url.parse(_url, true).query;//쿼리스트링만 따로 떼어온다
+  var pathname = url.parse(_url, true).pathname;//경로만 따로 떼어온다.
+  if (pathname == '/')//루트라면, 경로가 /로 끝나거나(/없이 끝나거나) 쿼리스트링이 있는 경우라면
   {
     if (queryData.id == undefined)//main페이지라면
     {
@@ -42,24 +50,27 @@ var app = http.createServer(function (request, response) {
         var title = "welcome";
         var description = "main page";
         var list = templateList(filelist);
-        var template = templateHTML(title, list, `<h2>${title}</h2>${description}`);
+        var template = templateHTML(title, list, 
+          `<h2>${title}</h2>${description}`,
+          `<a href="/create">creat</a>`);
         response.writeHead(200);
         response.end(template);
       })
     }
-    else {
+    else {//하위 페이지 생성, 쿼리스트링이 있는 경우
       fs.readdir('./data', function (error, filelist) {
         fs.readFile(`data/${queryData.id}`, 'utf8', function (err, description) {
           var title = queryData.id;
           var list = templateList(filelist);
-          var template = templateHTML(title, list, `<h2>${title}</h2>${description}`);
+          var template = templateHTML(title, list, `<h2>${title}</h2>${description}`,
+          `<a href="/create">creat</a> <a href="/update">update</a>`);
           response.writeHead(200);
           response.end(template);
         });
       });
     }
   }
-  else if (pathname == '/create') {
+  else if (pathname == '/create') {//문서추가, 추가 경로 존재 시
     fs.readdir('./data', function (error, filelist) {
       var title = "WEB - create";
       var list = templateList(filelist);
@@ -71,12 +82,12 @@ var app = http.createServer(function (request, response) {
         </p>
         <p><input type="submit"></p>
       </form>
-        `);
+        `,'');
       response.writeHead(200);
       response.end(template);
     })
   }
-  else if (pathname == '/create_process') {
+  else if (pathname == '/create_process') {//추가된문서 파일 저장 및 리다이렉션
     var body = '';
     request.on('data', function (data) {
       body += data;
@@ -95,7 +106,7 @@ var app = http.createServer(function (request, response) {
     });
 
   }
-  else {
+  else {//잘못된 페이지인 경우
     response.writeHead(404);
     response.end('Not found');
   }
