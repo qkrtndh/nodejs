@@ -86,9 +86,14 @@ var app = http.createServer(function (request, response) {
       var post = qs.parse(body);
       var title = post.title;
       var description = post.description;
+      fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
+        /*에러 처리시의 내용을 넣어야 하는데 현재는 다루지 않는다*/
+        response.writeHead(302, { Location: `/?id=${title}` });
+        response.end();
+
+      })
     });
-    response.writeHead(200);
-    response.end('success');
+
   }
   else {
     response.writeHead(404);
