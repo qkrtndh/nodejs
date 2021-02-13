@@ -129,6 +129,30 @@ var app = http.createServer(function (request, response) {
       });
     });
   }
+  else if (pathname == '/update_process') {//수정된문서 파일 저장 및 리다이렉션
+    var body = '';
+    request.on('data', function (data) {
+      body += data;
+
+    });
+    request.on('end', function () {
+      var post = qs.parse(body);
+      var id = post.id;
+      var title = post.title;
+      var description = post.description;
+      //파일 이름 수정시 내용
+      fs.rename(`data/${id}`,`data/${title}`,function(error){
+        //위의 create에서의 기능과 같이 이름을 바꾸고 내용을 바꾼다.
+        fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
+        
+          response.writeHead(302, { Location: `/?id=${title}` });
+          response.end();
+  
+        })
+      });
+    });
+
+  }
   else {//잘못된 페이지인 경우
     response.writeHead(404);
     response.end('Not found');
