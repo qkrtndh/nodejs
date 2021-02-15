@@ -2,44 +2,8 @@ var http = require('http');//require는 '모듈'을 가져온다.
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
+var template = require('./lib/template.js')
 
-var template = {
-  //html템플릿
-  //함수를 통해 공통의 서식을 만들고 nodejs를 통해 동적으로 내용이 바뀌게 한 뒤
-  //html 내용을 return한다.
-  HTML:function (title, list, body, controll) {
-    return `
-  <!doctype html>
-  <html>
-    <head>
-     <title>WEB1 - ${title}</title>
-      <meta charset="utf-8">
-    </head>
-    <body>
-      <h1><a href="/">WEB</a></h1>
-       ${list}
-       ${controll}
-       ${body}
-    </body>
-   </html>
-  `;
-},
-
-//목록 생성 템플릿
-//각 html페이지마다 공통으로 나타나는 리스트를 파일을 읽어들여
-//마찬가지로 html본문에 삽입할 수 있는 내용을 반환시킨다.
-List:function (filelist) {
-  var list = '<ol>';
-  var i = 0;
-  while (i < filelist.length) {
-    list += `<li><a href='/?id=${filelist[i]}'>${filelist[i]}</a></li>`;
-    i += 1;
-  }
-  list = list + '</ol>';
-  return list;
-}
-
-}
 //서버를 생성하고 내용을 표현한다.
 var app = http.createServer(function (request, response) {
   var _url = request.url;//_url에 사용자가 접속한 링크를 가져온다.
