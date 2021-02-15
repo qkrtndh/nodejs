@@ -4,6 +4,7 @@ var url = require('url');
 var qs = require('querystring');
 var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
 var path = require('path') //쿼리스트링을 통한 경로침입 방지를 위해 경로 분석 모듈
+var sanitizeHtml = require('sanitize-html')
 
 //서버를 생성하고 내용을 표현한다.
 var app = http.createServer(function (request, response) {
@@ -30,13 +31,15 @@ var app = http.createServer(function (request, response) {
         var filteredID = path.parse(queryData.id).base;
         fs.readFile(`data/${filteredID}`, 'utf8', function (err, description) {
           var title = queryData.id;
+          var sanitizedTitle = sanitizeHtml(title);
+          var sanitizedDescription = sanitizeHtml(description);
           var list = template.List(filelist);
-          var HTML = template.HTML(title, list,
-            `<h2>${title}</h2>${description}`,
+          var HTML = template.HTML(sanitizedTitle, list,
+            `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
             `<a href="/create">creat</a>
-             <a href="/update?id=${title}">update</a>
+             <a href="/update?id=${sanitizedTitle}">update</a>
              <form action = "/delete_process" method="post" onsubmit="return confirm('정말로 삭제하시겠습니까?')">
-              <input type="hidden" name="id" value=${title}>
+              <input type="hidden" name="id" value=${sanitizedTitle}>
               <input type="submit" value="delete">
              </form>`
           );
