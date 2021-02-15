@@ -2,7 +2,8 @@ var http = require('http');//require는 '모듈'을 가져온다.
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
-var template = require('./lib/template.js')
+var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
+var path = require('path') //쿼리스트링을 통한 경로침입 방지를 위해 경로 분석 모듈
 
 //서버를 생성하고 내용을 표현한다.
 var app = http.createServer(function (request, response) {
@@ -26,7 +27,8 @@ var app = http.createServer(function (request, response) {
     }
     else {//하위 페이지 생성, 쿼리스트링이 있는 경우
       fs.readdir('./data', function (error, filelist) {
-        fs.readFile(`data/${queryData.id}`, 'utf8', function (err, description) {
+        var filteredID = path.parse(queryData.id).base;
+        fs.readFile(`data/${filteredID}`, 'utf8', function (err, description) {
           var title = queryData.id;
           var list = template.List(filelist);
           var HTML = template.HTML(title, list,
@@ -71,7 +73,8 @@ var app = http.createServer(function (request, response) {
       var post = qs.parse(body);
       var title = post.title;
       var description = post.description;
-      fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
+      var filteredID = path.parse(post.title).base;
+      fs.writeFile(`data/${filteredID}`, description, 'utf8', function (err) {
         /*에러 처리시의 내용을 넣어야 하는데 현재는 다루지 않는다*/
         response.writeHead(302, { Location: `/?id=${title}` });
         response.end();
@@ -82,7 +85,8 @@ var app = http.createServer(function (request, response) {
   }
   else if (pathname == '/update') {//하위 페이지인 업데이트 페이지
     fs.readdir('./data', function (error, filelist) {
-      fs.readFile(`data/${queryData.id}`, 'utf8', function (err, description) {
+      var filteredID = path.parse(queryData.id).base;
+      fs.readFile(`data/${filteredID}`, 'utf8', function (err, description) {
         var title = queryData.id;
         var list = template.List(filelist);
         //제목이 바뀔 경우를 대비하여 id로 제목값을 따로 저장
@@ -114,8 +118,9 @@ var app = http.createServer(function (request, response) {
       var id = post.id;
       var title = post.title;
       var description = post.description;
+      var filteredID = path.parse(post.id).base;
       //파일 이름 수정시 내용
-      fs.rename(`data/${id}`, `data/${title}`, function (error) {
+      fs.rename(`data/${filteredID}`, `data/${title}`, function (error) {
         //위의 create에서의 기능과 같이 이름을 바꾸고 내용을 바꾼다.
         fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
           response.writeHead(302, { Location: `/?id=${title}` });
@@ -135,7 +140,8 @@ var app = http.createServer(function (request, response) {
     request.on('end', function () {
       var post = qs.parse(body);
       var id = post.id;
-      fs.unlink(`data/${id}`, function (error) {
+      var filteredID = path.parse(post.id).base;
+      fs.unlink(`data/${filteredID}`, function (error) {
         response.writeHead(302, { Location: `/` });
         response.end();
       })
