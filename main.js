@@ -163,13 +163,14 @@ var app = http.createServer(function (request, response) {
     });
     request.on('end', function () {
       var post = qs.parse(body);
-      var id = post.id;
-      var filteredID = path.parse(post.id).base;
-      fs.unlink(`data/${filteredID}`, function (error) {
+      db.query('delete from topic where id = ?',[post.id],function(err,topics){
+        if(err)
+        {
+          throw err;
+        }
         response.writeHead(302, { Location: `/` });
         response.end();
-      })
-
+      });
     });
   }
   else {//잘못된 페이지인 경우
