@@ -45,7 +45,7 @@ var app = http.createServer(function (request, response) {
         }
 
         //이후에 topic중에서 id에따라 추려낸다.
-        db.query(`select * from topic where id=?`, [queryData.id], function (err2, topic) {
+        db.query(`select * from topic left join author on topic.author_id = author.id where topic.id=?`, [queryData.id], function (err2, topic) {
           if (err2) {
             throw err2;
           }
@@ -53,7 +53,8 @@ var app = http.createServer(function (request, response) {
           var description = topic[0].description;
           var list = template.List(topics);
           var HTML = template.HTML(title, list,
-            `<h2>${title}</h2>${description}`,
+            `<h2>${title}</h2>${description}
+            <p>by ${topic[0].name}<p>`,
             `<a href="/create">creat</a>
              <a href="/update?id=${queryData.id}">update</a>
              <form action = "/delete_process" method="post" onsubmit="return confirm('정말로 삭제하시겠습니까?')">
@@ -72,19 +73,27 @@ var app = http.createServer(function (request, response) {
       if (err) {
         throw err;
       }
-      var title = "WEB - create";
-      var list = template.List(topics);
-      var HTML = template.HTML(title, list,
-        `<form action="/create_process" method="post">
-        <p><input type="text" name="title" placeholder="제목"></p>
-        <p>
-          <textarea name="description" placeholder="본문"></textarea>
-        </p>
-        <p><input type="submit"></p>
-      </form>
-        `, `<a href="/create">create</a>`);
-      response.writeHead(200);
-      response.end(HTML);
+      db.query('select * from author', function (err2, authors) {
+        if (err2) {
+          throw err2;
+        }
+        var title = "WEB - create";
+        var list = template.List(topics);
+        var HTML = template.HTML(title, list,
+          `<form action="/create_process" method="post">
+          <p><input type="text" name="title" placeholder="제목"></p>
+          <p>
+            <textarea name="description" placeholder="본문"></textarea>
+          </p>
+          <p>
+          ${template.authorSelect(authors)}
+          </p>
+          <p><input type="submit"></p>
+        </form>
+          `, `<a href="/create">create</a>`);
+        response.writeHead(200);
+        response.end(HTML);
+      });
     });
   }
   else if (pathname == '/create_process') {//추가된문서 파일 저장 및 리다이렉션
@@ -97,7 +106,7 @@ var app = http.createServer(function (request, response) {
       db.query(`
         insert into topic (title,description,created,author_id) 
           values(?,?,now(),?)`,//id는 자동으로 삽입되므로 생략, 제목, 설명 저자 아이디는 입력값이므로 현제로선 모르므로 와일드카드 ?처리
-        [post.title, post.description, 1],//읽어들인 값을 배열로 다음 자리에 두면 자동으로 인식. 저자아이디는 임의 삽입 하였음.
+        [post.title, post.description, post.author],//읽어들인 값을 배열로 다음 자리에 두면 자동으로 인식. 저자아이디는 임의 삽입 하였음.
         function (err, result) {
           if (err) {
             throw err;
@@ -163,9 +172,8 @@ var app = http.createServer(function (request, response) {
     });
     request.on('end', function () {
       var post = qs.parse(body);
-      db.query('delete from topic where id = ?',[post.id],function(err,topics){
-        if(err)
-        {
+      db.query('delete from topic where id = ?', [post.id], function (err, topics) {
+        if (err) {
           throw err;
         }
         response.writeHead(302, { Location: `/` });
