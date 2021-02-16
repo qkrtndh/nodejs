@@ -7,10 +7,10 @@ var path = require('path') //쿼리스트링을 통한 경로침입 방지를 �
 var sanitizeHtml = require('sanitize-html')
 var mysql = require('mysql');//mysql모듈 불러옴
 var db = mysql.createConnection({//접속을 위한데이터를 객체로.
-  host:'localhost',
-  user:'root',
-  password:'root',
-  database:'opentutorials'
+  host: 'localhost',
+  user: 'root',
+  password: 'root',
+  database: 'opentutorials'
 });
 db.connect();//접속
 
@@ -33,7 +33,7 @@ var app = http.createServer(function (request, response) {
         response.writeHead(200);
         response.end(HTML);
       })*/
-      db.query('select * from topic',function(err,topics){
+      db.query('select * from topic', function (err, topics) {
         //console.log(topics);
         var title = "welcome";
         var description = "main page";
@@ -41,13 +41,13 @@ var app = http.createServer(function (request, response) {
         var HTML = template.HTML(title, list,
           `<h2>${title}</h2>${description}`,
           `<a href="/create">creat</a>`);
-        
+
         response.writeHead(200);
         response.end(HTML);
       });
     }
     else {//하위 페이지 생성, 쿼리스트링이 있는 경우
-      fs.readdir('./data', function (error, filelist) {
+      /*fs.readdir('./data', function (error, filelist) {
         var filteredID = path.parse(queryData.id).base;
         fs.readFile(`data/${filteredID}`, 'utf8', function (err, description) {
           var title = queryData.id;
@@ -63,6 +63,32 @@ var app = http.createServer(function (request, response) {
               <input type="submit" value="delete">
              </form>`
           );
+          response.writeHead(200);
+          response.end(HTML);
+        });
+      });*/
+      db.query('select * from topic', function (err, topics) {//먼저 topic을 전체 불러오고
+        if (err) {
+          throw err;//throw하면 다음 명령어를 수행하지 않고 즉시 종료
+        }
+
+        //이후에 topic중에서 id에따라 추려낸다.
+        db.query(`select * from topic where id=?`, [queryData.id], function (err2, topic) {
+          if (err2) {
+            throw err2;
+          }
+          var title = topic[0].title;
+          var description = topic[0].description;
+          var list = template.List(topics);
+          var HTML = template.HTML(title, list,
+            `<h2>${title}</h2>${description}`,
+            `<a href="/create">creat</a>
+             <a href="/update?id=${queryData.id}">update</a>
+             <form action = "/delete_process" method="post" onsubmit="return confirm('정말로 삭제하시겠습니까?')">
+              <input type="hidden" name="id" value=${queryData.id}>
+              <input type="submit" value="delete">
+             </form>`
+             );
           response.writeHead(200);
           response.end(HTML);
         });
