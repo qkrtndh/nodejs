@@ -6,6 +6,7 @@ var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
 var path = require('path') //쿼리스트링을 통한 경로침입 방지를 위해 경로 분석 모듈
 var sanitizeHtml = require('sanitize-html')
 var mysql = require('mysql');//mysql모듈 불러옴
+const { DH_UNABLE_TO_CHECK_GENERATOR } = require('constants');
 var db = mysql.createConnection({//접속을 위한데이터를 객체로.
   host: 'localhost',
   user: 'root',
@@ -81,7 +82,7 @@ var app = http.createServer(function (request, response) {
         </p>
         <p><input type="submit"></p>
       </form>
-        `, '');
+        `, `<a href="/create">create</a>`);
       response.writeHead(200);
       response.end(HTML);
     });
@@ -108,24 +109,28 @@ var app = http.createServer(function (request, response) {
     });
   }
   else if (pathname == '/update') {//하위 페이지인 업데이트 페이지
-    fs.readdir('./data', function (error, filelist) {
-      var filteredID = path.parse(queryData.id).base;
-      fs.readFile(`data/${filteredID}`, 'utf8', function (err, description) {
-        var title = queryData.id;
-        var list = template.List(filelist);
+    db.query(`select * from topic`, function (err, topics) {
+      if (err) {
+        throw err;
+      }
+      db.query('select * from topic where id = ?', [queryData.id], function (err2, topic) {
+        if (err2) {
+          throw err2;
+        }
+        var list = template.List(topics);
         //제목이 바뀔 경우를 대비하여 id로 제목값을 따로 저장
         //사용자와 상관없는 내용이므로 hidden을 이용하여 숨긴다.
-        var HTML = template.HTML(title, list,
+        var HTML = template.HTML(topic[0].title, list,
           `
          <form action="/update_process" method="post">
-         <input type="hidden" name="id" value="${title}">
-        <p><input type="text" name="title" placeholder="제목" value="${title}"></p>
+         <input type="hidden" name="id" value="${topic[0].id}">
+        <p><input type="text" name="title" placeholder="제목" value="${topic[0].title}"></p>
         <p>
-          <textarea name="description" placeholder="본문">${description}</textarea>
+          <textarea name="description" placeholder="본문">${topic[0].description}</textarea>
         </p>
         <p><input type="submit"></p>
       </form>`,
-          `<a href="/create">creat</a> <a href="/update?id=${title}">update</a>`);
+          `<a href="/create">creat</a> <a href="/update?id=${topic[0].id}">update</a>`);
         response.writeHead(200);
         response.end(HTML);
       });
@@ -139,21 +144,16 @@ var app = http.createServer(function (request, response) {
     });
     request.on('end', function () {
       var post = qs.parse(body);
-      var id = post.id;
-      var title = post.title;
-      var description = post.description;
-      var filteredID = path.parse(post.id).base;
-      //파일 이름 수정시 내용
-      fs.rename(`data/${filteredID}`, `data/${title}`, function (error) {
-        //위의 create에서의 기능과 같이 이름을 바꾸고 내용을 바꾼다.
-        fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
-          response.writeHead(302, { Location: `/?id=${title}` });
-          response.end();
 
-        })
+      db.query(`update topic set title = ?,description = ?, author_id = 1 where id = ?`, [post.title, post.description, post.id], function (err2, topic) {
+        if (err2) {
+          throw err2;
+        }
+        response.writeHead(302, { Location: `/?id=${post.id}` });
+        response.end();
       });
-    });
 
+    });
   }
   else if (pathname == '/delete_process') {//문서 삭제 및 리다이렉션
     var body = '';
