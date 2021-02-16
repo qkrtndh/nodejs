@@ -23,16 +23,6 @@ var app = http.createServer(function (request, response) {
   {
     if (queryData.id == undefined)//main페이지라면
     {
-      /*fs.readdir('./data', function (error, filelist) {
-        var title = "welcome";
-        var description = "main page";
-        var list = template.List(filelist);
-        var HTML = template.HTML(title, list,
-          `<h2>${title}</h2>${description}`,
-          `<a href="/create">creat</a>`);
-        response.writeHead(200);
-        response.end(HTML);
-      })*/
       db.query('select * from topic', function (err, topics) {
         //console.log(topics);
         var title = "welcome";
@@ -47,26 +37,7 @@ var app = http.createServer(function (request, response) {
       });
     }
     else {//하위 페이지 생성, 쿼리스트링이 있는 경우
-      /*fs.readdir('./data', function (error, filelist) {
-        var filteredID = path.parse(queryData.id).base;
-        fs.readFile(`data/${filteredID}`, 'utf8', function (err, description) {
-          var title = queryData.id;
-          var sanitizedTitle = sanitizeHtml(title);
-          var sanitizedDescription = sanitizeHtml(description);
-          var list = template.List(filelist);
-          var HTML = template.HTML(sanitizedTitle, list,
-            `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
-            `<a href="/create">creat</a>
-             <a href="/update?id=${sanitizedTitle}">update</a>
-             <form action = "/delete_process" method="post" onsubmit="return confirm('정말로 삭제하시겠습니까?')">
-              <input type="hidden" name="id" value=${sanitizedTitle}>
-              <input type="submit" value="delete">
-             </form>`
-          );
-          response.writeHead(200);
-          response.end(HTML);
-        });
-      });*/
+
       db.query('select * from topic', function (err, topics) {//먼저 topic을 전체 불러오고
         if (err) {
           throw err;//throw하면 다음 명령어를 수행하지 않고 즉시 종료
@@ -88,7 +59,7 @@ var app = http.createServer(function (request, response) {
               <input type="hidden" name="id" value=${queryData.id}>
               <input type="submit" value="delete">
              </form>`
-             );
+          );
           response.writeHead(200);
           response.end(HTML);
         });
@@ -96,9 +67,12 @@ var app = http.createServer(function (request, response) {
     }
   }
   else if (pathname == '/create') {//문서추가, 추가 경로 존재 시
-    fs.readdir('./data', function (error, filelist) {
+    db.query('select * from topic', function (err, topics) {
+      if (err) {
+        throw err;
+      }
       var title = "WEB - create";
-      var list = template.List(filelist);
+      var list = template.List(topics);
       var HTML = template.HTML(title, list,
         `<form action="/create_process" method="post">
         <p><input type="text" name="title" placeholder="제목"></p>
@@ -110,27 +84,28 @@ var app = http.createServer(function (request, response) {
         `, '');
       response.writeHead(200);
       response.end(HTML);
-    })
+    });
   }
   else if (pathname == '/create_process') {//추가된문서 파일 저장 및 리다이렉션
     var body = '';
     request.on('data', function (data) {
       body += data;
-
     });
     request.on('end', function () {
       var post = qs.parse(body);
-      var title = post.title;
-      var description = post.description;
-      var filteredID = path.parse(post.title).base;
-      fs.writeFile(`data/${filteredID}`, description, 'utf8', function (err) {
-        /*에러 처리시의 내용을 넣어야 하는데 현재는 다루지 않는다*/
-        response.writeHead(302, { Location: `/?id=${title}` });
-        response.end();
-
-      })
+      db.query(`
+        insert into topic (title,description,created,author_id) 
+          values(?,?,now(),?)`,//id는 자동으로 삽입되므로 생략, 제목, 설명 저자 아이디는 입력값이므로 현제로선 모르므로 와일드카드 ?처리
+        [post.title, post.description, 1],//읽어들인 값을 배열로 다음 자리에 두면 자동으로 인식. 저자아이디는 임의 삽입 하였음.
+        function (err, result) {
+          if (err) {
+            throw err;
+          }
+          response.writeHead(302, { Location: `/?id=${result.insertId}` });//자동입력될 id는 현제 모르므로 
+          //삽입된 데이터의 id를 알아내기 위해 result.insertId를 사용한다
+          response.end();
+        })
     });
-
   }
   else if (pathname == '/update') {//하위 페이지인 업데이트 페이지
     fs.readdir('./data', function (error, filelist) {
