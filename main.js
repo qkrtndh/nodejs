@@ -5,6 +5,14 @@ var qs = require('querystring');
 var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
 var path = require('path') //쿼리스트링을 통한 경로침입 방지를 위해 경로 분석 모듈
 var sanitizeHtml = require('sanitize-html')
+var mysql = require('mysql');//mysql모듈 불러옴
+var db = mysql.createConnection({//접속을 위한데이터를 객체로.
+  host:'localhost',
+  user:'root',
+  password:'root',
+  database:'opentutorials'
+});
+db.connect();//접속
 
 //서버를 생성하고 내용을 표현한다.
 var app = http.createServer(function (request, response) {
@@ -15,7 +23,7 @@ var app = http.createServer(function (request, response) {
   {
     if (queryData.id == undefined)//main페이지라면
     {
-      fs.readdir('./data', function (error, filelist) {
+      /*fs.readdir('./data', function (error, filelist) {
         var title = "welcome";
         var description = "main page";
         var list = template.List(filelist);
@@ -24,7 +32,19 @@ var app = http.createServer(function (request, response) {
           `<a href="/create">creat</a>`);
         response.writeHead(200);
         response.end(HTML);
-      })
+      })*/
+      db.query('select * from topic',function(err,topics){
+        //console.log(topics);
+        var title = "welcome";
+        var description = "main page";
+        var list = template.List(topics);
+        var HTML = template.HTML(title, list,
+          `<h2>${title}</h2>${description}`,
+          `<a href="/create">creat</a>`);
+        
+        response.writeHead(200);
+        response.end(HTML);
+      });
     }
     else {//하위 페이지 생성, 쿼리스트링이 있는 경우
       fs.readdir('./data', function (error, filelist) {
