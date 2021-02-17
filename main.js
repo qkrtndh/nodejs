@@ -41,6 +41,9 @@ var app = http.createServer(function (request, response) {
   else if (pathname == '/author') {//저자 목록 출력
     author.home(request,response);
   }
+  else if (pathname == '/author/create_process') {//저자 목록 출력
+    author.create_process(request,response);
+  }
   else {//잘못된 페이지인 경우
     response.writeHead(404);
     response.end('Not found');
