@@ -4,6 +4,7 @@ var qs = require('querystring');
 var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
 var db = require('./lib/db.js');
 var topic = require('./lib/topic.js')
+var author = require('./lib/author')
 
 
 //서버를 생성하고 내용을 표현한다.
@@ -36,6 +37,9 @@ var app = http.createServer(function (request, response) {
   }
   else if (pathname == '/delete_process') {//문서 삭제 및 리다이렉션
     topic.delete(request,response);
+  }
+  else if (pathname == '/author') {//저자 목록 출력
+    author.home(request,response);
   }
   else {//잘못된 페이지인 경우
     response.writeHead(404);
