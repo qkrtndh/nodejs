@@ -1,19 +1,8 @@
 var http = require('http');//require는 '모듈'을 가져온다.
-var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
 var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
-var path = require('path') //쿼리스트링을 통한 경로침입 방지를 위해 경로 분석 모듈
-var sanitizeHtml = require('sanitize-html')
-var mysql = require('mysql');//mysql모듈 불러옴
-const { DH_UNABLE_TO_CHECK_GENERATOR } = require('constants');
-var db = mysql.createConnection({//접속을 위한데이터를 객체로.
-  host: 'localhost',
-  user: 'root',
-  password: 'root',
-  database: 'opentutorials'
-});
-db.connect();//접속
+var db = require('./lib/db.js');
 
 //서버를 생성하고 내용을 표현한다.
 var app = http.createServer(function (request, response) {
