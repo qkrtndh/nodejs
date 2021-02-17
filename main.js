@@ -29,68 +29,13 @@ var app = http.createServer(function (request, response) {
     topic.create_process(request,response);
   }
   else if (pathname == '/update') {//하위 페이지인 업데이트 페이지
-    db.query(`select * from topic`, function (err, topics) {
-      if (err) {
-        throw err;
-      }
-      db.query('select * from topic where id = ?', [queryData.id], function (err2, topic) {
-        if (err2) {
-          throw err2;
-        }
-        var list = template.List(topics);
-        //제목이 바뀔 경우를 대비하여 id로 제목값을 따로 저장
-        //사용자와 상관없는 내용이므로 hidden을 이용하여 숨긴다.
-        var HTML = template.HTML(topic[0].title, list,
-          `
-         <form action="/update_process" method="post">
-         <input type="hidden" name="id" value="${topic[0].id}">
-        <p><input type="text" name="title" placeholder="제목" value="${topic[0].title}"></p>
-        <p>
-          <textarea name="description" placeholder="본문">${topic[0].description}</textarea>
-        </p>
-        <p><input type="submit"></p>
-      </form>`,
-          `<a href="/create">creat</a> <a href="/update?id=${topic[0].id}">update</a>`);
-        response.writeHead(200);
-        response.end(HTML);
-      });
-    });
+    topic.update(request,response);
   }
   else if (pathname == '/update_process') {//수정된문서 파일 저장 및 리다이렉션
-    var body = '';
-    request.on('data', function (data) {
-      body += data;
-
-    });
-    request.on('end', function () {
-      var post = qs.parse(body);
-
-      db.query(`update topic set title = ?,description = ?, author_id = 1 where id = ?`, [post.title, post.description, post.id], function (err2, topic) {
-        if (err2) {
-          throw err2;
-        }
-        response.writeHead(302, { Location: `/?id=${post.id}` });
-        response.end();
-      });
-
-    });
+    topic.update_process(request,response);
   }
   else if (pathname == '/delete_process') {//문서 삭제 및 리다이렉션
-    var body = '';
-    request.on('data', function (data) {
-      body += data;
-
-    });
-    request.on('end', function () {
-      var post = qs.parse(body);
-      db.query('delete from topic where id = ?', [post.id], function (err, topics) {
-        if (err) {
-          throw err;
-        }
-        response.writeHead(302, { Location: `/` });
-        response.end();
-      });
-    });
+    topic.delete(request,response);
   }
   else {//잘못된 페이지인 경우
     response.writeHead(404);
