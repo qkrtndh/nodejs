@@ -6,6 +6,11 @@ var qs = require('querystring');
 var path = require('path') //쿼리스트링을 통한 경로침입 방지를 위해 경로 분석 모듈
 var sanitizeHtml = require('sanitize-html')
 var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
+var bodyParser = require('body-parser')
+
+app.use(bodyParser.urlencoded({ extended: false }));
+
+
 //app.get('/',(req,res)=>res.send('Hello world'))
 app.get('/', function (request, response) {//get방식으로 입력된 주소를 라우팅
   fs.readdir('./data', function (error, filelist) {
@@ -57,22 +62,17 @@ app.get('/create', (request, response) => {
   })
 })
 app.post('/create_process', (request, response) => {
-  var body = '';
-  request.on('data', function (data) {
-    body += data;
 
-  })
-  request.on('end', function () {
-    var post = qs.parse(body);
-    var title = post.title;
-    var description = post.description;
-    var filteredID = path.parse(post.title).base;
-    fs.writeFile(`data/${filteredID}`, description, 'utf8', function (err) {
-      //에러 처리시의 내용을 넣어야 하는데 현재는 다루지 않는다
-      response.redirect(`/page/${title}`);
-    })
+  var post = request.body;
+  var title = post.title;
+  var description = post.description;
+  var filteredID = path.parse(post.title).base;
+  fs.writeFile(`data/${filteredID}`, description, 'utf8', function (err) {
+    //에러 처리시의 내용을 넣어야 하는데 현재는 다루지 않는다
+    response.redirect(`/page/${title}`);
   })
 })
+
 app.get('/update/:pageId', (request, response) => {
   fs.readdir('./data', function (error, filelist) {
     var filteredID = path.parse(request.params.pageId).base;
@@ -96,42 +96,30 @@ app.get('/update/:pageId', (request, response) => {
     });
   });
 })
-app.post('/update_process',(request,response)=>{
-  var body = '';
-    request.on('data', function (data) {
-      body += data;
+app.post('/update_process', (request, response) => {
 
-    });
-    request.on('end', function () {
-      var post = qs.parse(body);
-      var id = post.id;
-      var title = post.title;
-      var description = post.description;
-      var filteredID = path.parse(post.id).base;
-      //파일 이름 수정시 내용
-      fs.rename(`data/${filteredID}`, `data/${title}`, function (error) {
-        //위의 create에서의 기능과 같이 이름을 바꾸고 내용을 바꾼다.
-        fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
-          response.redirect(`/page/${title}`);
-        })
-      });
-    });
+  var post = request.body;
+  var id = post.id;
+  var title = post.title;
+  var description = post.description;
+  var filteredID = path.parse(post.id).base;
+  //파일 이름 수정시 내용
+  fs.rename(`data/${filteredID}`, `data/${title}`, function (error) {
+    //위의 create에서의 기능과 같이 이름을 바꾸고 내용을 바꾼다.
+    fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
+      response.redirect(`/page/${title}`);
+    })
+  });
 })
 
-app.post('/delete_process',(request,response)=>{
-  var body = '';
-    request.on('data', function (data) {
-      body += data;
+app.post('/delete_process', (request, response) => {
 
-    });
-    request.on('end', function () {
-      var post = qs.parse(body);
-      var id = post.id;
-      var filteredID = path.parse(post.id).base;
-      fs.unlink(`data/${filteredID}`, function (error) {
-        response.redirect(`/`);
-      })
-    });
+  var post = request.body;
+  var id = post.id;
+  var filteredID = path.parse(post.id).base;
+  fs.unlink(`data/${filteredID}`, function (error) {
+    response.redirect(`/`);
+  })
 })
 
 
@@ -153,9 +141,9 @@ var app = http.createServer(function (request, response) {
   var _url = request.url;//_url에 사용자가 접속한 링크를 가져온다.
   var queryData = url.parse(_url, true).query;//쿼리스트링만 따로 떼어온다
   var pathname = url.parse(_url, true).pathname;//경로만 따로 떼어온다.
-  
+
   else if (pathname == '/delete_process') {//문서 삭제 및 리다이렉션
-    
+
   }
   else {//잘못된 페이지인 경우
     response.writeHead(404);
