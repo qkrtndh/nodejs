@@ -7,9 +7,10 @@ var path = require('path') //쿼리스트링을 통한 경로침입 방지를 �
 var sanitizeHtml = require('sanitize-html')
 var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
 var bodyParser = require('body-parser')
+var compression = require('compression')
 
 app.use(bodyParser.urlencoded({extended:false}));
-
+app.use(compression())
 
 //app.get('/',(req,res)=>res.send('Hello world'))
 app.get('/', function (request, response) {//get방식으로 입력된 주소를 라우팅
