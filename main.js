@@ -1,9 +1,11 @@
-const express = require('express')
-const app = express();
+const express = require('express') //익스프레스 모듈 로드
+const app = express(); //익스프레스의 반환값(애플리케이션)을 app 에 저장
 var fs = require('fs');
+var path = require('path') //쿼리스트링을 통한 경로침입 방지를 위해 경로 분석 모듈
+var sanitizeHtml = require('sanitize-html')
 var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
 //app.get('/',(req,res)=>res.send('Hello world'))
-app.get('/',function(request,response){
+app.get('/',function(request,response){//get방식으로 입력된 주소를 라우팅
   fs.readdir('./data', function (error, filelist) {
     var title = "welcome";
     var description = "main page";
@@ -15,8 +17,27 @@ app.get('/',function(request,response){
   })
 })
 
-  app.get('/page',function(req,res){
-    return res.send('page')
+  app.get('/page/:pageId',function(request,response){ //라우팅 방식
+    fs.readdir('./data', function (error, filelist) {
+      var filteredID = path.parse(request.params.pageId).base;
+      fs.readFile(`data/${filteredID}`, 'utf8', function (err, description) {
+        var title = request.params.pageId;
+        var sanitizedTitle = sanitizeHtml(title);
+        var sanitizedDescription = sanitizeHtml(description);
+        var list = template.List(filelist);
+        var HTML = template.HTML(sanitizedTitle, list,
+          `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
+          `<a href="/create">creat</a>
+           <a href="/update?id=${sanitizedTitle}">update</a>
+           <form action = "/delete_process" method="post" onsubmit="return confirm('정말로 삭제하시겠습니까?')">
+            <input type="hidden" name="id" value=${sanitizedTitle}>
+            <input type="submit" value="deleste">
+           </form>`
+        );
+        response.send(HTML);
+      });
+    });
+    
   })
 
 //app.listen(3000,()=>console.log('example app listening on port 3000'))
@@ -39,40 +60,9 @@ var app = http.createServer(function (request, response) {
   var pathname = url.parse(_url, true).pathname;//경로만 따로 떼어온다.
   if (pathname == '/')//루트라면, 경로가 /로 끝나거나(/없이 끝나거나) 쿼리스트링이 있는 경우라면
   {
-    if (queryData.id == undefined)//main페이지라면
-    {
-      fs.readdir('./data', function (error, filelist) {
-        var title = "welcome";
-        var description = "main page";
-        var list = template.List(filelist);
-        var HTML = template.HTML(title, list,
-          `<h2>${title}</h2>${description}`,
-          `<a href="/create">creat</a>`);
-        response.writeHead(200);
-        response.end(HTML);
-      })
-    }
+    
     else {//하위 페이지 생성, 쿼리스트링이 있는 경우
-      fs.readdir('./data', function (error, filelist) {
-        var filteredID = path.parse(queryData.id).base;
-        fs.readFile(`data/${filteredID}`, 'utf8', function (err, description) {
-          var title = queryData.id;
-          var sanitizedTitle = sanitizeHtml(title);
-          var sanitizedDescription = sanitizeHtml(description);
-          var list = template.List(filelist);
-          var HTML = template.HTML(sanitizedTitle, list,
-            `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
-            `<a href="/create">creat</a>
-             <a href="/update?id=${sanitizedTitle}">update</a>
-             <form action = "/delete_process" method="post" onsubmit="return confirm('정말로 삭제하시겠습니까?')">
-              <input type="hidden" name="id" value=${sanitizedTitle}>
-              <input type="submit" value="delete">
-             </form>`
-          );
-          response.writeHead(200);
-          response.end(HTML);
-        });
-      });
+      
     }
   }
   else if (pathname == '/create') {//문서추가, 추가 경로 존재 시
