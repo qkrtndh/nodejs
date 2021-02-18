@@ -9,14 +9,16 @@ var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
 var bodyParser = require('body-parser')
 var compression = require('compression')
 
+app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression())
-app.get('*',function (request, response, next) {
+app.get('*', function (request, response, next) {
   fs.readdir('./data', function (error, filelist) {
     request.list = filelist;
     next();
   })
 })
+
 //app.get('/',(req,res)=>res.send('Hello world'))
 app.get('/', function (request, response) {//get방식으로 입력된 주소를 라우팅
 
@@ -24,30 +26,37 @@ app.get('/', function (request, response) {//get방식으로 입력된 주소를
   var description = "main page";
   var list = template.List(request.list);
   var HTML = template.HTML(title, list,
-    `<h2>${title}</h2>${description}`,
+    `<h2>${title}</h2>${description} 
+    <img src=/images/hello.jpg style="width : 300px; display:block;margin-top:10px;">
+    `,
     `<a href="/create">creat</a>`);
   response.send(HTML);
 
 })
 
-app.get('/page/:pageId', function (request, response) { //라우팅 방식
+app.get('/page/:pageId', function (request, response,next) { //라우팅 방식
 
   var filteredID = path.parse(request.params.pageId).base;
   fs.readFile(`data/${filteredID}`, 'utf8', function (err, description) {
-    var title = request.params.pageId;
-    var sanitizedTitle = sanitizeHtml(title);
-    var sanitizedDescription = sanitizeHtml(description);
-    var list = template.List(request.list);
-    var HTML = template.HTML(sanitizedTitle, list,
-      `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
-      `<a href="/create">creat</a>
+    if (err) {
+      next(err);
+    }
+    else {
+      var title = request.params.pageId;
+      var sanitizedTitle = sanitizeHtml(title);
+      var sanitizedDescription = sanitizeHtml(description);
+      var list = template.List(request.list);
+      var HTML = template.HTML(sanitizedTitle, list,
+        `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
+        `<a href="/create">creat</a>
            <a href="/update/${sanitizedTitle}">update</a>
            <form action = "/delete_process" method="post" onsubmit="return confirm('정말로 삭제하시겠습니까?')">
             <input type="hidden" name="id" value=${sanitizedTitle}>
             <input type="submit" value="deleste">
            </form>`
-    );
-    response.send(HTML);
+      );
+      response.send(HTML);
+    }
   });
 
 })
@@ -128,6 +137,14 @@ app.post('/delete_process', (request, response) => {
   })
 })
 
+app.use(function (req, res, next) {
+  res.status(404).send('Sorry cant find that!');
+});
+
+app.use(function (err, req, res, next) {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
 
 //app.listen(3000,()=>console.log('example app listening on port 3000'))
 app.listen(3000, function () {
