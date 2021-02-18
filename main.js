@@ -1,4 +1,30 @@
-var http = require('http');//require는 '모듈'을 가져온다.
+const express = require('express')
+const app = express();
+var fs = require('fs');
+var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
+//app.get('/',(req,res)=>res.send('Hello world'))
+app.get('/',function(request,response){
+  fs.readdir('./data', function (error, filelist) {
+    var title = "welcome";
+    var description = "main page";
+    var list = template.List(filelist);
+    var HTML = template.HTML(title, list,
+      `<h2>${title}</h2>${description}`,
+      `<a href="/create">creat</a>`);
+    response.send(HTML);
+  })
+})
+
+  app.get('/page',function(req,res){
+    return res.send('page')
+  })
+
+//app.listen(3000,()=>console.log('example app listening on port 3000'))
+app.listen(3000,function(){
+  return console.log('example app listening on port 3000');
+})
+
+/*var http = require('http');//require는 '모듈'을 가져온다.
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
@@ -78,7 +104,7 @@ var app = http.createServer(function (request, response) {
       var description = post.description;
       var filteredID = path.parse(post.title).base;
       fs.writeFile(`data/${filteredID}`, description, 'utf8', function (err) {
-        /*에러 처리시의 내용을 넣어야 하는데 현재는 다루지 않는다*/
+        //에러 처리시의 내용을 넣어야 하는데 현재는 다루지 않는다
         response.writeHead(302, { Location: `/?id=${title}` });
         response.end();
 
@@ -158,4 +184,4 @@ var app = http.createServer(function (request, response) {
 
 
 });
-app.listen(3000);
+app.listen(3000);*/
