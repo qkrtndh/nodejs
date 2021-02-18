@@ -8,7 +8,7 @@ var sanitizeHtml = require('sanitize-html')
 var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
 var bodyParser = require('body-parser')
 
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended:false}));
 
 
 //app.get('/',(req,res)=>res.send('Hello world'))
@@ -98,28 +98,28 @@ app.get('/update/:pageId', (request, response) => {
 })
 app.post('/update_process', (request, response) => {
 
-  var post = request.body;
-  var id = post.id;
-  var title = post.title;
-  var description = post.description;
-  var filteredID = path.parse(post.id).base;
-  //파일 이름 수정시 내용
-  fs.rename(`data/${filteredID}`, `data/${title}`, function (error) {
-    //위의 create에서의 기능과 같이 이름을 바꾸고 내용을 바꾼다.
-    fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
-      response.redirect(`/page/${title}`);
-    })
+    var post = request.body;
+    var id = post.id;
+    var title = post.title;
+    var description = post.description;
+    var filteredID = path.parse(post.id).base;
+    //파일 이름 수정시 내용
+    fs.rename(`data/${filteredID}`, `data/${title}`, function (error) {
+      //위의 create에서의 기능과 같이 이름을 바꾸고 내용을 바꾼다.
+      fs.writeFile(`data/${title}`, description, 'utf8', function (err) {
+        response.redirect(`/page/${title}`);
+      })
   });
 })
 
 app.post('/delete_process', (request, response) => {
-
-  var post = request.body;
-  var id = post.id;
-  var filteredID = path.parse(post.id).base;
-  fs.unlink(`data/${filteredID}`, function (error) {
-    response.redirect(`/`);
-  })
+  
+    var post = request.body;
+    var id = post.id;
+    var filteredID = path.parse(post.id).base;
+    fs.unlink(`data/${filteredID}`, function (error) {
+      response.redirect(`/`);
+    })
 })
 
 
