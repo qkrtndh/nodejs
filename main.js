@@ -151,6 +151,48 @@ var app = http.createServer(function (request, response) {
 
     });
   }
+  else if (pathname == '/login') {
+    fs.readdir('./data', function (error, filelist) {
+      var title = "Login";
+      var list = template.List(filelist);
+      var HTML = template.HTML(title, list,
+        `<form action = 'login_process' method = 'post'>
+        <p><input type = 'text' name = 'email' placeholder='plz insert email'></p>
+        <p><input type = 'password' name = 'password' placeholder='plz insert p/w'></p>
+        <p><input type = 'submit'></p>
+        </form>`,
+        `<a href="/create">creat</a>`);
+      response.writeHead(200);
+      response.end(HTML);
+    })
+  }
+  else if (pathname == '/login_process') {
+    var body = '';
+    request.on('data', function (data) {
+      body += data;
+    });
+    request.on('end', function () {
+      var post = qs.parse(body);
+      console.log(post.email);
+      if (post.email == '1234' && post.password == '1234') {
+        response.writeHead(302, {
+          'Set-Cookie': [
+            `email=${post.email}`,
+            `password=${post.password}`,
+            `nickname=testemail`
+          ],
+          Location: `/`
+        });
+        response.end();
+      }
+      else {
+        
+        response.end("who?");
+      }
+
+    });
+
+  }
   else {//잘못된 페이지인 경우
     response.writeHead(404);
     response.end('Not found');
