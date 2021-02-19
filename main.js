@@ -2,15 +2,33 @@ var http = require('http');//require는 '모듈'을 가져온다.
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
-var template = require('./lib/template.js')//페이지 출력 템플릿 모듈
+var template = require('./lib/template.js');//페이지 출력 템플릿 모듈
 var path = require('path') //쿼리스트링을 통한 경로침입 방지를 위해 경로 분석 모듈
-var sanitizeHtml = require('sanitize-html')
+var sanitizeHtml = require('sanitize-html');
+var cookie = require('cookie');
+
+function authIsOwner(request,response)
+{
+  var isOwner = false;
+  var cookies = {};
+  if(request.headers.cookie)
+  {
+    cookies = cookie.parse(request.headers.cookie);
+  }
+  if(cookies.email=='1234'&&cookies.password=='1234')
+  {
+    isOwner=true;
+  }
+  return isOwner;
+}
 
 //서버를 생성하고 내용을 표현한다.
 var app = http.createServer(function (request, response) {
   var _url = request.url;//_url에 사용자가 접속한 링크를 가져온다.
   var queryData = url.parse(_url, true).query;//쿼리스트링만 따로 떼어온다
   var pathname = url.parse(_url, true).pathname;//경로만 따로 떼어온다.
+  var isOwner = authIsOwner(request,response);
+  console.log(isOwner);
   if (pathname == '/')//루트라면, 경로가 /로 끝나거나(/없이 끝나거나) 쿼리스트링이 있는 경우라면
   {
     if (queryData.id == undefined)//main페이지라면
@@ -173,7 +191,6 @@ var app = http.createServer(function (request, response) {
     });
     request.on('end', function () {
       var post = qs.parse(body);
-      console.log(post.email);
       if (post.email == '1234' && post.password == '1234') {
         response.writeHead(302, {
           'Set-Cookie': [
