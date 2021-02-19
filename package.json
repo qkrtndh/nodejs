@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/qkrtndh/nodejs#readme",
   "dependencies": {
+    "cookie": "^0.4.1",
     "sanitize-html": "^2.3.2"
   }
 }
