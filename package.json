@@ -21,6 +21,8 @@
   "homepage": "https://github.com/qkrtndh/nodejs#readme",
   "dependencies": {
     "cookie": "^0.4.1",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
     "sanitize-html": "^2.3.2"
   }
 }
