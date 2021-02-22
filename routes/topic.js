@@ -7,6 +7,10 @@ var template = require('../lib/template.js');
 var auth = require('../lib/auth')
 
 router.get('/create', (request, response) => {
+    if (auth.isOwner(request, response) != true) {
+        response.redirect('/auth/login');
+        return false;
+    }
     var title = "WEB - create";
     var list = template.List(request.list);
     var HTML = template.HTML(title, list,
@@ -17,7 +21,7 @@ router.get('/create', (request, response) => {
           </p>
           <p><input type="submit"></p>
         </form>
-          `, '',auth.statusUI(request,response));
+          `, '', auth.statusUI(request, response));
     response.send(HTML);
 })
 router.post('/create_process', (request, response) => {
@@ -33,7 +37,10 @@ router.post('/create_process', (request, response) => {
 })
 
 router.get('/update/:pageId', (request, response) => {
-
+    if (auth.isOwner(request, response) != true) {
+        response.redirect('/auth/login');
+        return false;
+    }
     var filteredID = path.parse(request.params.pageId).base;
     fs.readFile(`data/${filteredID}`, 'utf8', function (err, description) {
         var title = request.params.pageId;
@@ -50,7 +57,7 @@ router.get('/update/:pageId', (request, response) => {
         </p>
         <p><input type="submit"></p>
       </form>`,
-            `<a href="/topic/create">creat</a> <a href="/topic/update/${title}">update</a>`,auth.statusUI(request,response));
+            `<a href="/topic/create">creat</a> <a href="/topic/update/${title}">update</a>`, auth.statusUI(request, response));
         response.send(HTML);
     });
 
@@ -72,7 +79,10 @@ router.post('/update_process', (request, response) => {
 })
 
 router.post('/delete_process', (request, response) => {
-
+    if (auth.isOwner(request, response) != true) {
+        response.redirect('/auth/login');
+        return false;
+    }
     var post = request.body;
     var id = post.id;
     var filteredID = path.parse(post.id).base;
@@ -100,7 +110,7 @@ router.get('/:pageId', function (request, response, next) { //라우팅 방식
              <form action = "/topic/delete_process" method="post" onsubmit="return confirm('정말로 삭제하시겠습니까?')">
               <input type="hidden" name="id" value=${sanitizedTitle}>
               <input type="submit" value="deleste">
-             </form>`,auth.statusUI(request,response)
+             </form>`, auth.statusUI(request, response)
             );
             response.send(HTML);
         }
