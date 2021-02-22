@@ -4,6 +4,8 @@ var path = require('path');
 var fs = require('fs');
 var sanitizeHtml = require('sanitize-html');
 var template = require('../lib/template.js');
+var auth = require('../lib/auth')
+
 router.get('/create', (request, response) => {
     var title = "WEB - create";
     var list = template.List(request.list);
@@ -15,7 +17,7 @@ router.get('/create', (request, response) => {
           </p>
           <p><input type="submit"></p>
         </form>
-          `, '');
+          `, '',auth.statusUI(request,response));
     response.send(HTML);
 })
 router.post('/create_process', (request, response) => {
@@ -48,7 +50,7 @@ router.get('/update/:pageId', (request, response) => {
         </p>
         <p><input type="submit"></p>
       </form>`,
-            `<a href="/topic/create">creat</a> <a href="/topic/update/${title}">update</a>`);
+            `<a href="/topic/create">creat</a> <a href="/topic/update/${title}">update</a>`,auth.statusUI(request,response));
         response.send(HTML);
     });
 
@@ -98,7 +100,7 @@ router.get('/:pageId', function (request, response, next) { //라우팅 방식
              <form action = "/topic/delete_process" method="post" onsubmit="return confirm('정말로 삭제하시겠습니까?')">
               <input type="hidden" name="id" value=${sanitizedTitle}>
               <input type="submit" value="deleste">
-             </form>`
+             </form>`,auth.statusUI(request,response)
             );
             response.send(HTML);
         }
