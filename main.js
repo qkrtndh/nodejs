@@ -8,9 +8,6 @@ var compression = require('compression');
 var helmet = require('helmet')
 app.use(helmet())
 
-var topicRouter = require('./routes/topic');
-var indexRouter = require('./routes/index')
-
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression())
@@ -21,6 +18,11 @@ app.get('*', function (request, response, next) {
   })
 })
 
+var topicRouter = require('./routes/topic');
+var indexRouter = require('./routes/index');
+var authRouter = require('./routes/auth');
+
+app.use('/auth',authRouter);
 app.use('/topic',topicRouter); //topic으로 시작하는 주소들에게 topicRouter미들웨어를 적용하겠다.
 app.use('/',indexRouter);
 
