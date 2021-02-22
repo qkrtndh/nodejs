@@ -7,27 +7,22 @@ var path = require('path') //쿼리스트링을 통한 경로침입 방지를 �
 var sanitizeHtml = require('sanitize-html');
 var cookie = require('cookie');
 
-function authIsOwner(request,response)
-{
+function authIsOwner(request, response) {
   var isOwner = false;
   var cookies = {};
-  if(request.headers.cookie)
-  {
+  if (request.headers.cookie) {
     cookies = cookie.parse(request.headers.cookie);
   }
-  if(cookies.email=='1234'&&cookies.password=='1234')
-  {
-    isOwner=true;
+  if (cookies.email == '1234' && cookies.password == '1234') {
+    isOwner = true;
   }
   return isOwner;
 }
 
-function authStatusUI(request,response)
-{
-  var authStatusUI =`<a href="/login">login</a>`;
-  if(authIsOwner(request,response))
-  {
-    authStatusUI =`<a href="/logout_process">logout</a>`;
+function authStatusUI(request, response) {
+  var authStatusUI = `<a href="/login">login</a>`;
+  if (authIsOwner(request, response)) {
+    authStatusUI = `<a href="/logout_process">logout</a>`;
   }
   return authStatusUI;
 }
@@ -37,7 +32,7 @@ var app = http.createServer(function (request, response) {
   var _url = request.url;//_url에 사용자가 접속한 링크를 가져온다.
   var queryData = url.parse(_url, true).query;//쿼리스트링만 따로 떼어온다
   var pathname = url.parse(_url, true).pathname;//경로만 따로 떼어온다.
-  var isOwner = authIsOwner(request,response);
+  var isOwner = authIsOwner(request, response);
   console.log(isOwner);
   if (pathname == '/')//루트라면, 경로가 /로 끝나거나(/없이 끝나거나) 쿼리스트링이 있는 경우라면
   {
@@ -49,7 +44,7 @@ var app = http.createServer(function (request, response) {
         var list = template.List(filelist);
         var HTML = template.HTML(title, list,
           `<h2>${title}</h2>${description}`,
-          `<a href="/create">creat</a>`,authStatusUI(request,response));
+          `<a href="/create">creat</a>`, authStatusUI(request, response));
         response.writeHead(200);
         response.end(HTML);
       })
@@ -69,7 +64,7 @@ var app = http.createServer(function (request, response) {
              <form action = "/delete_process" method="post" onsubmit="return confirm('정말로 삭제하시겠습니까?')">
               <input type="hidden" name="id" value=${sanitizedTitle}>
               <input type="submit" value="delete">
-             </form>`,authStatusUI(request,response)
+             </form>`, authStatusUI(request, response)
           );
           response.writeHead(200);
           response.end(HTML);
@@ -78,6 +73,12 @@ var app = http.createServer(function (request, response) {
     }
   }
   else if (pathname == '/create') {//문서추가, 추가 경로 존재 시
+    if (authIsOwner(request, response) == false) {
+      response.writeHead(302, { Location: `/login` });
+      response.end();
+      /*response.end('need login');
+      return false;*/
+    }
     fs.readdir('./data', function (error, filelist) {
       var title = "WEB - create";
       var list = template.List(filelist);
@@ -89,12 +90,18 @@ var app = http.createServer(function (request, response) {
         </p>
         <p><input type="submit"></p>
       </form>
-        `, '',authStatusUI(request,response));
+        `, '', authStatusUI(request, response));
       response.writeHead(200);
       response.end(HTML);
     })
   }
   else if (pathname == '/create_process') {//추가된문서 파일 저장 및 리다이렉션
+    if (authIsOwner(request, response) == false) {
+      response.writeHead(302, { Location: `/login` });
+      response.end();
+      /*response.end('need login');
+      return false;*/
+    }
     var body = '';
     request.on('data', function (data) {
       body += data;
@@ -115,6 +122,12 @@ var app = http.createServer(function (request, response) {
 
   }
   else if (pathname == '/update') {//하위 페이지인 업데이트 페이지
+    if (authIsOwner(request, response) == false) {
+      response.writeHead(302, { Location: `/login` });
+      response.end();
+      /*response.end('need login');
+      return false;*/
+    }
     fs.readdir('./data', function (error, filelist) {
       var filteredID = path.parse(queryData.id).base;
       fs.readFile(`data/${filteredID}`, 'utf8', function (err, description) {
@@ -133,13 +146,19 @@ var app = http.createServer(function (request, response) {
         <p><input type="submit"></p>
       </form>`,
           `<a href="/create">creat</a> <a href="/update?id=${title}">update</a>`,
-          authStatusUI(request,response));
+          authStatusUI(request, response));
         response.writeHead(200);
         response.end(HTML);
       });
     });
   }
   else if (pathname == '/update_process') {//수정된문서 파일 저장 및 리다이렉션
+    if (authIsOwner(request, response) == false) {
+      response.writeHead(302, { Location: `/login` });
+      response.end();
+      /*response.end('need login');
+      return false;*/
+    }
     var body = '';
     request.on('data', function (data) {
       body += data;
@@ -164,6 +183,13 @@ var app = http.createServer(function (request, response) {
 
   }
   else if (pathname == '/delete_process') {//문서 삭제 및 리다이렉션
+    if (authIsOwner(request, response) == false) {
+      response.writeHead(302, { Location: `/login` });
+      response.end();
+      return false;
+      /*response.end('need login');
+      return false;*/
+    }
     var body = '';
     request.on('data', function (data) {
       body += data;
@@ -214,7 +240,7 @@ var app = http.createServer(function (request, response) {
         response.end();
       }
       else {
-        
+
         response.end("who?");
       }
 
@@ -228,15 +254,15 @@ var app = http.createServer(function (request, response) {
     });
     request.on('end', function () {
       var post = qs.parse(body);
-        response.writeHead(302, {
-          'Set-Cookie': [
-            `email= Max-Age=0`,
-            `password=Max-Age=0`,
-            `nickname=Max-Age=0`
-          ],
-          Location: `/`
-        });
-        response.end();
+      response.writeHead(302, {
+        'Set-Cookie': [
+          `email= Max-Age=0`,
+          `password=Max-Age=0`,
+          `nickname=Max-Age=0`
+        ],
+        Location: `/`
+      });
+      response.end();
     });
   }
   else {//잘못된 페이지인 경우
