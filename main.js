@@ -1,6 +1,10 @@
 const express = require('express') //익스프레스 모듈 로드
 const app = express(); //익스프레스의 반환값(애플리케이션)을 app 에 저장
 var fs = require('fs');
+var session = require('express-session')
+var FileStore = require('session-file-store')(session)
+
+
 
 var bodyParser = require('body-parser');
 var compression = require('compression');
@@ -11,6 +15,15 @@ app.use(helmet())
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression())
+app.use(session({
+  secret:`dafsdfasahdf`,
+  resave : false,
+  saveUninitialized: true,
+  store:new FileStore()
+}))
+
+
+
 app.get('*', function (request, response, next) {
   fs.readdir('./data', function (error, filelist) {
     request.list = filelist;

@@ -5,12 +5,18 @@ var fs = require('fs');
 var sanitizeHtml = require('sanitize-html');
 var template = require('../lib/template.js');
 
+var testData = {
+    email: '1234',
+    password: '1234',
+    nickname: 'testauth'
+}
+
 router.get('/login', (request, response) => {
     var title = "WEB - login";
     var list = template.List(request.list);
     var HTML = template.HTML(title, list,
         `<form action="/auth/login_process" method="post">
-          <p><input type="text" name="title" placeholder="email"></p>
+          <p><input type="text" name="email" placeholder="email"></p>
           <p>
             <input type="password" name="pwd" placeholder="password">
           </p>
@@ -18,6 +24,24 @@ router.get('/login', (request, response) => {
         </form>
           `, '');
     response.send(HTML);
+})
+router.post('/login_process', (request, response) => {
+
+    var post = request.body;
+    var email = post.email;
+    var pwd = post.pwd;
+    if (email === testData.email && pwd === testData.password) {
+        request.session.is_login=true;
+        request.session.nickname = testData.nickname;
+        request.session.save(function(){
+            response.redirect(`/`);
+        })
+        
+    }
+    else {
+        response.send('false');
+    }
+
 })
 /*
 router.get('/create', (request, response) => {
