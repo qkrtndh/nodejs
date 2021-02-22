@@ -22,6 +22,16 @@ function authIsOwner(request,response)
   return isOwner;
 }
 
+function authStatusUI(request,response)
+{
+  var authStatusUI =`<a href="/login">login</a>`;
+  if(authIsOwner(request,response))
+  {
+    authStatusUI =`<a href="/logout_process">logout</a>`;
+  }
+  return authStatusUI;
+}
+
 //서버를 생성하고 내용을 표현한다.
 var app = http.createServer(function (request, response) {
   var _url = request.url;//_url에 사용자가 접속한 링크를 가져온다.
@@ -39,7 +49,7 @@ var app = http.createServer(function (request, response) {
         var list = template.List(filelist);
         var HTML = template.HTML(title, list,
           `<h2>${title}</h2>${description}`,
-          `<a href="/create">creat</a>`);
+          `<a href="/create">creat</a>`,authStatusUI(request,response));
         response.writeHead(200);
         response.end(HTML);
       })
@@ -59,7 +69,7 @@ var app = http.createServer(function (request, response) {
              <form action = "/delete_process" method="post" onsubmit="return confirm('정말로 삭제하시겠습니까?')">
               <input type="hidden" name="id" value=${sanitizedTitle}>
               <input type="submit" value="delete">
-             </form>`
+             </form>`,authStatusUI(request,response)
           );
           response.writeHead(200);
           response.end(HTML);
@@ -79,7 +89,7 @@ var app = http.createServer(function (request, response) {
         </p>
         <p><input type="submit"></p>
       </form>
-        `, '');
+        `, '',authStatusUI(request,response));
       response.writeHead(200);
       response.end(HTML);
     })
@@ -122,7 +132,8 @@ var app = http.createServer(function (request, response) {
         </p>
         <p><input type="submit"></p>
       </form>`,
-          `<a href="/create">creat</a> <a href="/update?id=${title}">update</a>`);
+          `<a href="/create">creat</a> <a href="/update?id=${title}">update</a>`,
+          authStatusUI(request,response));
         response.writeHead(200);
         response.end(HTML);
       });
@@ -209,6 +220,24 @@ var app = http.createServer(function (request, response) {
 
     });
 
+  }
+  else if (pathname == '/logout_process') {
+    var body = '';
+    request.on('data', function (data) {
+      body += data;
+    });
+    request.on('end', function () {
+      var post = qs.parse(body);
+        response.writeHead(302, {
+          'Set-Cookie': [
+            `email= Max-Age=0`,
+            `password=Max-Age=0`,
+            `nickname=Max-Age=0`
+          ],
+          Location: `/`
+        });
+        response.end();
+    });
   }
   else {//잘못된 페이지인 경우
     response.writeHead(404);
