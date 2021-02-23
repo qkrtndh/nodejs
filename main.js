@@ -1,16 +1,12 @@
 const express = require('express') //익스프레스 모듈 로드
 const app = express(); //익스프레스의 반환값(애플리케이션)을 app 에 저장
 var fs = require('fs');
-var session = require('express-session')
-var FileStore = require('session-file-store')(session)
-
-
-
 var bodyParser = require('body-parser');
 var compression = require('compression');
-
 var helmet = require('helmet')
 app.use(helmet())
+var session = require('express-session')
+var FileStore = require('session-file-store')(session)
 
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -31,10 +27,26 @@ var testData = {
 
 var passport = require('passport'), LocalStrategy = require('passport-local').Strategy;
 
-app.post('/auth/login_process', passport.authenticate('local', {
-  successRedirect: '/',
-  failureRedirect: '/auth/login'
-}))
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser(function (user, done) {
+  done(null, user.email);
+});
+
+passport.deserializeUser(function (id, done) {
+  console.log("1");
+  done(null, testData);
+});
+
+
+app.post('/auth/login_process', passport.authenticate('local', { failureRedirect: '/auth/login' }),
+  (req, res) => {
+    req.session.save(() => {
+      res.redirect('/')
+    })
+  })
+  
 
 passport.use(new LocalStrategy(
   {
@@ -42,7 +54,6 @@ passport.use(new LocalStrategy(
     passwordField: 'pwd'
   },
   function (username, password, done) {
-    console.log(username, password);
     if (username == testData.email) {
       if (password == testData.password) {
         return done(null, testData);
