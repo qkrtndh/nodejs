@@ -7,6 +7,8 @@ var helmet = require('helmet')
 app.use(helmet())
 var session = require('express-session')
 var FileStore = require('session-file-store')(session)
+var flash = require('connect-flash')
+
 
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -29,6 +31,7 @@ var passport = require('passport'), LocalStrategy = require('passport-local').St
 
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(flash());
 
 passport.serializeUser(function (user, done) {
   done(null, user.email);
@@ -40,13 +43,45 @@ passport.deserializeUser(function (id, done) {
 });
 
 
-app.post('/auth/login_process', passport.authenticate('local', { failureRedirect: '/auth/login' }),
+/*app.post('/auth/login_process', passport.authenticate('local', { failureRedirect: '/auth/login',failureFlash:true,successFlash:true}),
   (req, res) => {
     req.session.save(() => {
+      
       res.redirect('/')
     })
-  })
-  
+  })*/
+app.post('/auth/login_process', (req, res, next) => {
+
+  passport.authenticate('local', (err, user, info) => {
+
+    if (req.session.flash) {
+      req.session.flash = {}
+    }
+
+    req.flash('message', info.message)
+
+    req.session.save(() => {
+
+      if (err) {
+        return next(err)
+      }
+      if (!user) {
+        return res.redirect('/auth/login')
+      }
+
+      req.logIn(user, (err) => {
+        if (err) {
+          return next(err)
+        }
+        return req.session.save(() => {
+          res.redirect('/')
+        })
+      })
+    })
+
+  })(req, res, next)
+})
+
 
 passport.use(new LocalStrategy(
   {
@@ -56,7 +91,7 @@ passport.use(new LocalStrategy(
   function (username, password, done) {
     if (username == testData.email) {
       if (password == testData.password) {
-        return done(null, testData);
+        return done(null, testData,{message:'success'});
       }
       else {
         return done(null, false, { message: 'Incorrect password.' });
@@ -79,6 +114,7 @@ app.get('*', function (request, response, next) {
 var topicRouter = require('./routes/topic');
 var indexRouter = require('./routes/index');
 var authRouter = require('./routes/auth');
+const { response } = require('express');
 
 app.use('/auth', authRouter);
 app.use('/topic', topicRouter); //topic으로 시작하는 주소들에게 topicRouter미들웨어를 적용하겠다.
