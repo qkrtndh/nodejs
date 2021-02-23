@@ -4,6 +4,7 @@ var template = require('../lib/template.js');
 var auth = require('../lib/auth')
 
 router.get('/', function (request, response) {//get방식으로 입력된 주소를 라우팅
+  console.log(request.user);
   var title = "welcome";
   var description = "main page";
   var list = template.List(request.list);
