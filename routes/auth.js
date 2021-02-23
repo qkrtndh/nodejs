@@ -5,11 +5,7 @@ var fs = require('fs');
 var sanitizeHtml = require('sanitize-html');
 var template = require('../lib/template.js');
 
-var testData = {
-    email: '1234',
-    password: '1234',
-    nickname: 'testauth'
-}
+
 
 router.get('/login', (request, response) => {
     var title = "WEB - login";
@@ -25,6 +21,7 @@ router.get('/login', (request, response) => {
           `, '');
     response.send(HTML);
 })
+/*
 router.post('/login_process', (request, response) => {
 
     var post = request.body;
@@ -42,7 +39,7 @@ router.post('/login_process', (request, response) => {
         response.send('false');
     }
 
-})
+})*/
 router.get('/logout', (request, response) => {
     request.session.destroy((err)=>{
         response.redirect('/');
