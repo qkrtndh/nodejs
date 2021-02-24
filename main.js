@@ -21,88 +21,8 @@ app.use(session({
 }))
 
 //passport는 session 밑에
-var testData = {
-  email: '1234',
-  password: '1234',
-  nickname: 'testauth'
-}
-
-var passport = require('passport'), LocalStrategy = require('passport-local').Strategy;
-
-app.use(passport.initialize());
-app.use(passport.session());
 app.use(flash());
-
-passport.serializeUser(function (user, done) {
-  done(null, user.email);
-});
-
-passport.deserializeUser(function (id, done) {
-  console.log("1");
-  done(null, testData);
-});
-
-
-/*app.post('/auth/login_process', passport.authenticate('local', { failureRedirect: '/auth/login',failureFlash:true,successFlash:true}),
-  (req, res) => {
-    req.session.save(() => {
-      
-      res.redirect('/')
-    })
-  })*/
-app.post('/auth/login_process', (req, res, next) => {
-
-  passport.authenticate('local', (err, user, info) => {
-
-    if (req.session.flash) {
-      req.session.flash = {}
-    }
-
-    req.flash('message', info.message)
-
-    req.session.save(() => {
-
-      if (err) {
-        return next(err)
-      }
-      if (!user) {
-        return res.redirect('/auth/login')
-      }
-
-      req.logIn(user, (err) => {
-        if (err) {
-          return next(err)
-        }
-        return req.session.save(() => {
-          res.redirect('/')
-        })
-      })
-    })
-
-  })(req, res, next)
-})
-
-
-passport.use(new LocalStrategy(
-  {
-    usernameField: 'email',
-    passwordField: 'pwd'
-  },
-  function (username, password, done) {
-    if (username == testData.email) {
-      if (password == testData.password) {
-        return done(null, testData,{message:'success'});
-      }
-      else {
-        return done(null, false, { message: 'Incorrect password.' });
-      }
-    }
-    else {
-      return done(null, false, { message: 'Incorrect username.' });
-    }
-  }
-));
-
+var passport = require('./lib/passport')(app);
 
 app.get('*', function (request, response, next) {
   fs.readdir('./data', function (error, filelist) {
@@ -113,7 +33,7 @@ app.get('*', function (request, response, next) {
 
 var topicRouter = require('./routes/topic');
 var indexRouter = require('./routes/index');
-var authRouter = require('./routes/auth');
+var authRouter = require('./routes/auth')(passport);
 const { response } = require('express');
 
 app.use('/auth', authRouter);
